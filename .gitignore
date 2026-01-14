@@ -1,0 +1,36 @@
+# Ignore everything by default
+/*
+
+# Allow specific directories
+!/.git/
+!/.github/
+!/.gitignore
+!/test/
+
+# Allow wp-content and navigate deeper
+!/wp-content/
+
+# Ignore everything in wp-content by default
+/wp-content/*
+
+# Allow specific plugin and theme directories
+!/wp-content/plugins/
+/wp-content/plugins/*
+!/wp-content/plugins/job-ready/
+!/wp-content/plugins/neca-reporting/
+!/wp-content/plugins/neca-testing-tools/
+
+!/wp-content/themes/
+/wp-content/themes/*
+!/wp-content/themes/necaeducation/
+
+# OS / Editor
+.DS_Store
+.vscode/
+node_modules/
+
+# Config
+wp-config.php
+
+# Logs
+*.log
