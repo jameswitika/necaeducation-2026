@@ -21,7 +21,7 @@ class JRAPartyContact
 	var $jobtitle; 				// string Used	for	parties	of	type	Employer
 	var $phone; 				// string
 	var $email; 				// string
-	//var $contact_method; 		// reference “Letter” or “Email”
+	var $contact_method; 		// reference “Letter” or “Email”
 	var $party_identifier; 		// reference If used, the party with the given identifier will be used instead of the details above.
 	
 	function __construct()
@@ -35,7 +35,7 @@ class JRAPartyContact
 		$this->jobtitle = ''; 				// string Used	for	parties	of	type	Employer
 		$this->phone = ''; 					// string
 		$this->email = ''; 					// string
-		//$this->contact_method = 'Email';	// reference “Letter” or “Email”
+		$this->contact_method = 'Email';	// reference “Letter” or “Email”
 		$this->party_identifier = ''; 		// reference If used, the party with the given identifier will be used instead of the details above.
 	}
 }
@@ -91,7 +91,7 @@ class JRAPartyContactOperations
 		catch (Exception $e)
 		{
 			$error = $e->getMessage();
-			send_error_email($url, $method, $xml, $error);
+			send_error_email($url, $method, '', $error);
 			return false;
 		}
 		
@@ -203,13 +203,11 @@ class JRAPartyContactOperations
 					<relationship>'.$party_contact->relationship.'</relationship>
 					<phone>'.$party_contact->phone.'</phone>
 					<email>'.$party_contact->email.'</email>';
-		
-/*
+
 		if($party_contact->contact_method == 'Email')
 		{
 			$xml .= '<contact-method>'.$party_contact->contact_method.'</contact-method>';
 		}
-*/
 
 		// Close Party
 		$xml .= '</party-contact>';

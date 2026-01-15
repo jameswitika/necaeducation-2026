@@ -15,6 +15,13 @@ class GWDayCount {
 	
 	private static $script_output;
 	
+	public $form_id;
+	public $start_field_id;
+	public $end_field_id;
+	public $count_field_id;
+	public $count_adjust;
+	public $form;
+	
 	function __construct( $args ) {
 		
 		extract( wp_parse_args( $args, array(

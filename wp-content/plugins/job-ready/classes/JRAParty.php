@@ -159,10 +159,46 @@ class JRAPartyOperations
 		catch (Exception $e)
 		{
 			$error = $e->getMessage();
-			send_error_email($url, $method, $xml, $error);
+			send_error_email($url, $method, '', $error);
 			return false;
 		}
 	}
+
+
+    // Load a JRAParty by Party ID
+    static function loadJRAPartyByID( $party_id )
+    {
+        global $jr_api_headers;
+
+        $webservice = '/webservice/parties/' . htmlspecialchars($party_id);
+        $url = JR_API_SERVER . $webservice;
+        $method = 'GET';
+
+        // Call the Job Ready API
+        try {
+
+            //make POST request
+            $response = wp_remote_request(	$url,
+                array(	'method' 	=> $method,
+                        'headers' 	=> $jr_api_headers,
+                        'timeout' 	=> 500 )
+            );
+
+            // Get the response
+            $result = wp_remote_retrieve_body( $response );
+
+            // Convert the XML to an Object
+            $result_object = xmlToObject($result);
+
+            return $result_object;
+        }
+        catch (Exception $e)
+        {
+            $error = $e->getMessage();
+            send_error_email($url, $method, '', $error);
+            return false;
+        }
+    }
 	
 	
 	static function getJRAParty( $party, $email = '' )
@@ -230,7 +266,7 @@ class JRAPartyOperations
 		catch (Exception $e)
 		{
 			$error = $e->getMessage();
-			send_error_email($url, $method, $xml, $error);
+			send_error_email($url, $method, '', $error);
 			return false;
 		}
 	}
@@ -314,7 +350,7 @@ class JRAPartyOperations
 		catch (Exception $e)
 		{
 			$error = $e->getMessage();
-			send_error_email($url, $method, $xml, $error);
+			send_error_email($auth_url, $auth_method, $auth_xml, $error);
 			return false;
 		}
 	}
@@ -520,6 +556,36 @@ class JRAPartyOperations
 		
 		return $xml;
 	}
+
+
+	static function createJRAPartyXMLBasic( $party )
+	{
+		// XML Header
+		$xml = '<?xml version="1.0" encoding="UTF-8"?>
+				<party>';
+
+		$xml .= '	<party-type>'.$party->party_type.'</party-type>
+					<contact-method>'.$party->contact_method.'</contact-method>';
+		
+		// Used for People Only
+		if($party->party_type == "Person")
+		{
+			$xml .='	<surname>'.htmlspecialchars(convert_smart_quotes($party->surname), ENT_XML1, "utf-8").'</surname>
+						<first-name>'.htmlspecialchars(convert_smart_quotes($party->first_name), ENT_XML1, "utf-8").'</first-name>
+						<middle-name>'.htmlspecialchars(convert_smart_quotes($party->middle_name), ENT_XML1, "utf-8").'</middle-name>';
+		}
+		
+		// Generate the XML for Contact Details
+		if(isset($party->contact_detail_child) && count($party->contact_detail_child) > 0)
+		{
+			$xml .= JRAPartyContactDetailOperations::createJRAPartyContactDetailXML( $party->contact_detail_child);
+		}
+		
+		// Close Party
+		$xml .= '</party>';
+		
+		return $xml;
+	}
 	
 	
 	static function updateJRAPartyXML( $party )
@@ -608,4 +674,93 @@ class JRAPartyOperations
 		
 		return $xml;
 	}
+
+    static function mapJRAPartyXMLObjectToJRAParty( $party_object )
+    {
+        $party = new JRAParty();
+
+        // Basic party information
+        $party->party_identifier = (string) $party_object->{'party-identifier'};
+        $party->party_type = (string) $party_object->{'party-type'};
+        $party->contact_method = (string) $party_object->{'contact-method'};
+        
+        // Personal details
+        $party->surname = (string) $party_object->{'surname'};
+        $party->first_name = (string) $party_object->{'first-name'};
+        $party->middle_name = (string) $party_object->{'middle-name'};
+        $party->known_by = (string) $party_object->{'known-by'};
+        $party->birth_date = (string) $party_object->{'birth-date'};
+        $party->gender = (string) $party_object->{'gender'};
+        $party->title = (string) $party_object->{'title'};
+        
+        // Login details
+        $party->login = (string) $party_object->{'login'};
+        $party->password_temporary = (string) $party_object->{'password-temporary'};
+        $party->logon_enabled = (string) $party_object->{'logon-enabled'} === 'true';
+        
+        // USI
+        $party->usi_number = (string) $party_object->{'usi-number'};
+        
+        // Marketing
+        $party->do_not_market = (string) $party_object->{'do-not-market'} === 'true';
+        
+        // Addresses
+        if (isset($party_object->{'addresses'}->{'address'})) {
+            $addresses = array();
+            foreach ($party_object->{'addresses'}->{'address'} as $address_xml) {
+                $address = new JRAPartyAddress();
+                $address->primary = (string) $address_xml->{'primary'};
+                $address->street_address1 = (string) $address_xml->{'street-address1'};
+                $address->street_address2 = (string) $address_xml->{'street-address2'};
+                $address->suburb = (string) $address_xml->{'suburb'};
+                $address->state = (string) $address_xml->{'state'};
+                $address->post_code = (string) $address_xml->{'post-code'};
+                $address->country = (string) $address_xml->{'country'};
+                $address->location = (string) $address_xml->{'location'};
+                $addresses[] = $address;
+            }
+            $party->address_child = $addresses;
+        }
+        
+        // Contact details
+        if (isset($party_object->{'contact-details'}->{'contact-detail'})) {
+            $contact_details = array();
+            $contact_detail_array = $party_object->{'contact-details'}->{'contact-detail'};
+            
+            // Handle single or multiple contact details
+            if (!is_array($contact_detail_array)) {
+                $contact_detail_array = array($contact_detail_array);
+            }
+            
+            foreach ($contact_detail_array as $contact_xml) {
+                $contact = new JRAPartyContactDetail();
+                $contact->primary = (string) $contact_xml->{'primary'};
+                $contact->contact_type = (string) $contact_xml->{'contact-type'};
+                $contact->value = (string) $contact_xml->{'value'};
+                $contact_details[] = $contact;
+            }
+            $party->contact_detail_child = $contact_details;
+        }
+        
+        // Ad-hoc fields
+        if (isset($party_object->{'ad-hoc-fields'}->{'ad-hoc-field'})) {
+            $adhoc_fields = array();
+            $adhoc_array = $party_object->{'ad-hoc-fields'}->{'ad-hoc-field'};
+            
+            // Handle single or multiple ad-hoc fields
+            if (!is_array($adhoc_array)) {
+                $adhoc_array = array($adhoc_array);
+            }
+            
+            foreach ($adhoc_array as $adhoc_xml) {
+                $adhoc = new JRAPartyAdhoc();
+                $adhoc->name = (string) $adhoc_xml->{'name'};
+                $adhoc->value = (string) $adhoc_xml->{'value'};
+                $adhoc_fields[] = $adhoc;
+            }
+            $party->adhoc_child = $adhoc_fields;
+        }
+        
+        return $party;
+    }
 }

@@ -169,8 +169,8 @@ function woocommerce_order_completed_jobready_post_processing($order_id)
 			}
 			
 			// Get the Order Item Data
-			$order_item = $item->get_data ();
-			$product_id = $item->get_product_id ();
+			$order_item = $item->get_data();
+			$product_id = $order_item['product_id'];
 			
 			// Calculate the item cost (after discounts)
 			$item_discount = 0;
@@ -232,6 +232,28 @@ function woocommerce_order_completed_jobready_post_processing($order_id)
 				
 				// Gravity Form Party ID field #
 				$gf_party_id_field = 112;
+			}
+			elseif ($gravity_form_id == NASC_REGISTRATION_FORM)
+			{
+				// echo "Non Accredited Application Form Submission Process<br/>";
+				$party_id = nasc_registration_form_process($form_data, $order, $item_cost);
+				
+				// Setup the WooCommerce keep array (array of keys to be kept on website database)
+				$wc_keep_array = array (
+						'_gravity_forms_history',
+						'_Course Scope Code',
+						'_Course Number',
+						'Course Option',
+						'First Name',
+						'Family Name',
+						'Party ID' 
+				);
+				
+				// Set up a Gravity Form keep array (array of form field id's to be kept on website database)
+				$gf_keep_array = array (22, 23, 26, 9, 8, 21 );
+				
+				// Gravity Form Party ID field #
+				$gf_party_id_field = 35;
 			}
 			elseif ($gravity_form_id == IOT_FORM_ID)
 			{

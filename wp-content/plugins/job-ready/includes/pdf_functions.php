@@ -5,7 +5,7 @@ function neca_create_pdf($filename, $content)
 {
 	try {
 		// init HTML2PDF
-		$html2pdf = new Html2Pdf ( 'P', 'A4', 'fr', true, 'UTF-8', array (
+		$html2pdf = new Html2Pdf ( 'P', 'A4', 'en', true, 'UTF-8', array (
 				0,
 				0,
 				0,

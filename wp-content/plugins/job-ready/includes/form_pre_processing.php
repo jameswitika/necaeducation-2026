@@ -42,7 +42,6 @@ function jrar_invoice_options($course_number, $neca_member)
 		}
 	}
 	
-	
 	return $choices;
 }
 

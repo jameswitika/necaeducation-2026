@@ -15,6 +15,8 @@ if(!defined('JR_ROOT_FILE')) {
 // Sync with Job Ready
 function job_ready_sync()
 {
+    echo "<h1>JOB READY SYNC PROCESS STARTED</h1>";
+
 	global $jr_api_headers;
 		
 	$method = "GET";
@@ -57,6 +59,8 @@ function job_ready_sync()
 			// Get the response
 			$result = wp_remote_retrieve_body( $response );
 			
+            echo "Result: <pre>" . print_r($result, true) . "</pre>";
+
 			// Convert the XML to an Object
 			$jra_courses= xmlToObject($result);
 					

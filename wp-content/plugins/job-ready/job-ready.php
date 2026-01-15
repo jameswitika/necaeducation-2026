@@ -27,7 +27,7 @@ include JR_ROOT_PATH . '/includes/settings.php';
 // Basic Authentication headers (don't use in production) with Content-Type set to XML
 global $jr_api_headers;
 $jr_api_headers = array (
-		'Authorization' => 'Basic ' . base64_encode ( 'key' . ':' . '732290dfc5b9af7353e9037a258077f4345709f3' ),
+		'Authorization' => 'Basic ' . base64_encode ( 'key' . ':' . 'b90d211506c971a3e1cd8530cd3d4f0ae3602083' ),
 		'Content-Type' => 'text/xml' 
 );
 
@@ -75,24 +75,16 @@ include JR_ROOT_PATH . '/includes/employer_lookup_functions.php';
 include JR_ROOT_PATH . '/includes/shortcodes.php';
 
 // Dedicated application form scripts
-//include JR_ROOT_PATH . '/includes/apprentice_application_form.php';
-//include JR_ROOT_PATH . '/includes/asc_application_form.php';
-//include JR_ROOT_PATH . '/includes/asc_holding_bay_application_form.php';
 include JR_ROOT_PATH . '/includes/accredited_holding_bay_application_form.php';
-//include JR_ROOT_PATH . '/includes/asc_necgdc_application_form.php';
-//include JR_ROOT_PATH . '/includes/asc_necclv_application_form.php';
 include JR_ROOT_PATH . '/includes/cpd_application_form.php';
 include JR_ROOT_PATH . '/includes/ffs_accredited_application_form.php';
 include JR_ROOT_PATH . '/includes/ffs_non_accredited_application_form.php';
-//include JR_ROOT_PATH . '/includes/iot_application_form.php';
 include JR_ROOT_PATH . '/includes/jobready_registration_form.php';
-//include JR_ROOT_PATH . '/includes/nasc_application_form.php';
+include JR_ROOT_PATH . '/includes/nasc_registration_form.php';
+include JR_ROOT_PATH . '/includes/nasc_enrolment_form.php';
 include JR_ROOT_PATH . '/includes/pre_apprentice_application_form.php';
 include JR_ROOT_PATH . '/includes/project_management_diploma_application_form.php';
-//include JR_ROOT_PATH . '/includes/project_management_certiv_application_form.php';
 include JR_ROOT_PATH . '/includes/uee30820_application_form.php';
-
-
 
 // PDF Library
 require_once(JR_ROOT_PATH.'/vendor/autoload.php');
@@ -1033,6 +1025,7 @@ function job_ready_login_form_process() {
 	}
 }
 function job_ready_login_form() {
+    $content = '';
 	if (isset ( $_SESSION ['party_id'] )) {
 		$content .= "You are currently logged in as <strong>" . $_SESSION ['party_login'] . "</strong> and we've pre-populated your form with these details. If this is not correct, please logout.<br/>
 					<form method='post' action=''>" . wp_nonce_field ( 'handle_logout_form', 'nonce_logout_form' ) . "
@@ -1087,7 +1080,7 @@ function woocommerce_job_ready_login_injection() {
     global $product;
     $product_id = $product->get_id();
     
-    if($product_id != PRE_APPRENTICE_PRODUCT_ID)
+    if($product_id != PRE_APPRENTICE_PRODUCT_ID && $product_id != NASC_PRODUCT_ID) // Exclude Pre-Apprentice Course and Non-Accredited Course Registration
     {
         $job_ready_login_form = job_ready_login_form ();
         echo $job_ready_login_form;

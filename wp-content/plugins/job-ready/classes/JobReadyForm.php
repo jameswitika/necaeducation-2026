@@ -92,6 +92,7 @@ class JobReadyForm
 	var $employer_paying_invoice;
 	var $usi_flag;
 	var $usi_number;
+    var $file_usi_transcript;
 	var $city_of_birth;
 	var $vsn;
 	var $previous_victorian_education;
@@ -105,6 +106,7 @@ class JobReadyForm
 	var $industry_employment;
 	var $occupation;
 	var $concession_flag;
+    var $cohorts;
 	var $how_did_you_hear;
 	
 	// 2018.10.17 - Required for Skills First Program PDF
@@ -247,6 +249,7 @@ class JobReadyForm
 		$this->employer_paying_invoice = '';
 		$this->usi_flag = '';
 		$this->usi_number = '';
+        $this->file_usi_transcript = '';
 		$this->city_of_birth = '';
 		$this->vsn = '';
 		$this->previous_victorian_education = '';
@@ -402,62 +405,69 @@ class JobReadyFormOperations
 			$form_fields->postal_address_same = 'Yes';
 			
 			// Loops through all addresses
-			foreach($addresses as $address)
-			{
-				$location = (string) $address->{'location'};
-				if($location == 'Home')
-				{
-					$form_fields->street_number = (string) $address->{'street-number'};
-					$form_fields->street_name = (string) $address->{'street-name'};
+            if( is_array( $addresses ) || is_object( $addresses ) ) 
+            {
+                foreach($addresses as $address)
+                {
+                    $location = (string) $address->{'location'};
+                    if($location == 'Home')
+                    {
+                        $form_fields->street_number = (string) $address->{'street-number'};
+                        $form_fields->street_name = (string) $address->{'street-name'};
 
-					$form_fields->street_address1 = (string) $address->{'street-address1'};
-					$street_address2 = (string) $address->{'street-address2'};
-					if( trim($street_address2) != '')
-					{
-						$form_fields->street_address1 .= ' ' . $street_address2;
-					}
-					
-					$form_fields->suburb = (string) $address->{'suburb'};
-					$form_fields->state = (string) $address->{'state'};
-					$form_fields->country = (string) $address->{'country'};
-					$form_fields->postcode = (string) $address->{'post-code'};
-				}
-				elseif ($location == 'Postal')
-				{
-					$form_fields->postal_street_number = (string) $address->{'street-number'};
-					$form_fields->postal_street_name = (string) $address->{'street-name'};
-					
-					$form_fields->postal_street_address1 = (string) $address->{'street-address1'};
-					$postal_street_address2 = (string) $address->{'street-address2'};
-					if( trim($postal_street_address2) != '')
-					{
-						$form_fields->postal_street_address1 .= ' ' . $postal_street_address2;
-					}
-					$form_fields->postal_suburb = (string) $address->{'suburb'};
-					$form_fields->postal_state = (string) $address->{'state'};
-					$form_fields->postal_country = (string) $address->{'country'};
-					$form_fields->postal_postcode = (string) $address->{'post-code'};
-					$form_fields->postal_address_same = 'No';
-				}
-			}
+                        $form_fields->street_address1 = (string) $address->{'street-address1'};
+                        $street_address2 = (string) $address->{'street-address2'};
+                        if( trim($street_address2) != '')
+                        {
+                            $form_fields->street_address1 .= ' ' . $street_address2;
+                        }
+                        
+                        $form_fields->suburb = (string) $address->{'suburb'};
+                        $form_fields->state = (string) $address->{'state'};
+                        $form_fields->country = (string) $address->{'country'};
+                        $form_fields->postcode = (string) $address->{'post-code'};
+                    }
+                    elseif ($location == 'Postal')
+                    {
+                        $form_fields->postal_street_number = (string) $address->{'street-number'};
+                        $form_fields->postal_street_name = (string) $address->{'street-name'};
+                        
+                        $form_fields->postal_street_address1 = (string) $address->{'street-address1'};
+                        $postal_street_address2 = (string) $address->{'street-address2'};
+                        if( trim($postal_street_address2) != '')
+                        {
+                            $form_fields->postal_street_address1 .= ' ' . $postal_street_address2;
+                        }
+                        $form_fields->postal_suburb = (string) $address->{'suburb'};
+                        $form_fields->postal_state = (string) $address->{'state'};
+                        $form_fields->postal_country = (string) $address->{'country'};
+                        $form_fields->postal_postcode = (string) $address->{'post-code'};
+                        $form_fields->postal_address_same = 'No';
+                    }
+                }
+            }
 	
 			$contact_details = $party_xml_object->{'party'}->{'contact-details'}->{'contact-detail'};
-			foreach($contact_details as $contact_detail)
-			{
-				$contact_type = (string) $contact_detail->{'contact-type'};
-				if($contact_type == 'Email')
-				{
-					$form_fields->email = (string) $contact_detail->{'value'};
-				}
-				elseif ($contact_type == 'Mobile')
-				{
-					$form_fields->mobile_phone = (string) $contact_detail->{'value'};
-				}
-				elseif ($contact_type == 'Phone')
-				{
-					$form_fields->home_phone = (string) $contact_detail->{'value'};
-				}
-			}
+			
+            if( is_array( $contact_details ) || is_object( $contact_details ) ) 
+            {
+                foreach($contact_details as $contact_detail)
+                {
+                    $contact_type = (string) $contact_detail->{'contact-type'};
+                    if($contact_type == 'Email')
+                    {
+                        $form_fields->email = (string) $contact_detail->{'value'};
+                    }
+                    elseif ($contact_type == 'Mobile')
+                    {
+                        $form_fields->mobile_phone = (string) $contact_detail->{'value'};
+                    }
+                    elseif ($contact_type == 'Phone')
+                    {
+                        $form_fields->home_phone = (string) $contact_detail->{'value'};
+                    }
+                }
+            }
 
 			$avetmiss = $party_xml_object->{'party'}->{'avetmiss'};
 			
@@ -511,11 +521,7 @@ class JobReadyFormOperations
 				}
 			}
 			
-	//		$form_fields->prior_education_qualification = '';
 			$form_fields->city_of_birth = (string) $avetmiss->{'town-of-birth'};
-	// 		$form_fields->vsn = '';
-	// 		$form_fields->previous_victorian_education = '';
-	// 		$form_fields->previous_victorian_school = '';
 			
 			if(isset($avetmiss->disabilities->disability))
 			{
@@ -532,15 +538,173 @@ class JobReadyFormOperations
 			{
 				$form_fields->disability_flag = "No";
 			}
-			
-			// These fields are stored with specific course enrolments, and not with the Party so will not be populated
-			// $form_fields->study_reason = '';
-			// $form_fields->industry_employment = '';
-			// $form_fields->occupation = '';
-			// $form_fields->how_did_you_hear = '';
-
 		}
 		
 		return $form_fields;
 	}
+
+    static function convertPartyXMLToJobReadyForm($party_xml_object)
+    {
+        $form_fields = new JobReadyForm();
+        $party_type = (string) $party_xml_object->{'party-type'};
+
+        $form_fields->gender = (string) $party_xml_object->{'gender'};
+        $form_fields->title = (string) $party_xml_object->{'title'};
+        $form_fields->first_name = (string) $party_xml_object->{'first-name'};
+        $form_fields->middle_name = (string) $party_xml_object->{'middle-name'};
+        $form_fields->surname = (string) $party_xml_object->{'surname'};
+        $form_fields->known_by = (string) $party_xml_object->{'known-by'};
+        $form_fields->birth_date = (string) $party_xml_object->{'birth-date'};
+        if(isset($party_xml_object->{'usi-number'}) && $party_xml_object->{'usi-number'} != '')
+        {
+            $form_fields->usi_flag = 'Yes';
+            $form_fields->usi_number = (string) $party_xml_object->{'usi-number'};
+        }
+        else
+        {
+            $form_fields->usi_number = '';
+        }
+        
+        $addresses = $party_xml_object->{'addresses'}->{'address'};
+        
+        // Set Postal Address Same before we loop through
+        // If we find a postal address, we'll override this flag accordingly.
+        $form_fields->postal_address_same = 'Yes';
+        
+        // Loops through all addresses
+        if( is_array( $addresses ) || is_object( $addresses ) ) 
+        {
+            foreach($addresses as $address)
+            {
+                $location = (string) $address->{'location'};
+                if($location == 'Home')
+                {
+                    $form_fields->street_number = (string) $address->{'street-number'};
+                    $form_fields->street_name = (string) $address->{'street-name'};
+
+                    $form_fields->street_address1 = (string) $address->{'street-address1'};
+                    $street_address2 = (string) $address->{'street-address2'};
+                    if( trim($street_address2) != '')
+                    {
+                        $form_fields->street_address1 .= ' ' . $street_address2;
+                    }
+                    
+                    $form_fields->suburb = (string) $address->{'suburb'};
+                    $form_fields->state = (string) $address->{'state'};
+                    $form_fields->country = (string) $address->{'country'};
+                    $form_fields->postcode = (string) $address->{'post-code'};
+                }
+                elseif ($location == 'Postal')
+                {
+                    $form_fields->postal_street_number = (string) $address->{'street-number'};
+                    $form_fields->postal_street_name = (string) $address->{'street-name'};
+                    
+                    $form_fields->postal_street_address1 = (string) $address->{'street-address1'};
+                    $postal_street_address2 = (string) $address->{'street-address2'};
+                    if( trim($postal_street_address2) != '')
+                    {
+                        $form_fields->postal_street_address1 .= ' ' . $postal_street_address2;
+                    }
+                    $form_fields->postal_suburb = (string) $address->{'suburb'};
+                    $form_fields->postal_state = (string) $address->{'state'};
+                    $form_fields->postal_country = (string) $address->{'country'};
+                    $form_fields->postal_postcode = (string) $address->{'post-code'};
+                    $form_fields->postal_address_same = 'No';
+                }
+            }
+        }
+
+        $contact_details = $party_xml_object->{'contact-details'}->{'contact-detail'};
+        
+        if( is_array( $contact_details ) || is_object( $contact_details ) ) 
+        {
+            foreach($contact_details as $contact_detail)
+            {
+                $contact_type = (string) $contact_detail->{'contact-type'};
+                if($contact_type == 'Email')
+                {
+                    $form_fields->email = (string) $contact_detail->{'value'};
+                }
+                elseif ($contact_type == 'Mobile')
+                {
+                    $form_fields->mobile_phone = (string) $contact_detail->{'value'};
+                }
+                elseif ($contact_type == 'Phone')
+                {
+                    $form_fields->home_phone = (string) $contact_detail->{'value'};
+                }
+            }
+        }
+
+        $avetmiss = $party_xml_object->{'avetmiss'};
+        
+        $labour_force_status = (string) $avetmiss->{'labour-force-status'};
+        $form_fields->labour_force_status = strstr($labour_force_status, '/', true);
+        
+        // Set default to Australia if not specified in Job Ready
+        $country_of_birth = (string) $avetmiss->{'country-of-birth'};
+        $form_fields->country_of_birth = trim($country_of_birth) == '' ? 'Australia' : $country_of_birth;
+        
+        
+        $form_fields->citizenship_status = (string) $avetmiss->{'citizenship-status'};
+        $form_fields->citizenship_other = (string) $avetmiss->{'nationality'};
+        
+        if( $form_fields->citizenship_status == 'Australian Citizenship' ||
+            $form_fields->citizenship_status == 'Permanent Humanitarian Visa Holder' ||
+            $form_fields->citizenship_status == 'New Zealand Citizen' )
+        {
+            $form_fields->australian_citizen = "Yes";
+        }
+        elseif($form_fields->citizenship_status == '')
+        {
+            $form_fields->australian_citizen = "";
+        }
+        else
+        {
+            $form_fields->australian_citizen = "No";
+        }
+        $form_fields->indigenous_status = (string) $avetmiss->{'indigenous-status'};
+
+        $main_language = (string) $avetmiss->{'main-language'};
+        $form_fields->main_language = $main_language;
+
+        $form_fields->at_school_flag = (string) $avetmiss->{'at-school-flag'};
+        $form_fields->school = (string) $avetmiss->{'school'};
+        $highest_school_level = (string) $avetmiss->{'highest-school-level'};
+        $form_fields->highest_school_level = strstr($highest_school_level, '/', true);
+        $form_fields->year_highest_school_level = (string) $avetmiss->{'year-highest-school-level'};
+
+
+        $form_fields->prior_education_flag = $avetmiss->{'prior-education-flag'};
+        if($form_fields->prior_education_flag == 'Yes')
+        {
+            $form_fields->prior_educations = array();
+            
+            $prior_educations = $avetmiss->{'prior-educations'}->{'prior-education'};
+            
+            foreach($prior_educations as $prior_education)
+            {
+                array_push( $form_fields->prior_educations, (string) $prior_education->{'prior-education-type'} );
+            }
+        }
+        
+        $form_fields->city_of_birth = (string) $avetmiss->{'town-of-birth'};
+        
+        if(isset($avetmiss->disabilities->disability))
+        {
+            $form_fields->disability_flag = "Yes";
+
+            $disabilities = $avetmiss->disabilities->disability;
+            
+            foreach($disabilities as $disability)
+            {
+                array_push($form_fields->disability_types, (string) $disability->{'disability-type'});
+            }
+        }
+        else 
+        {
+            $form_fields->disability_flag = "No";
+        }
+    return $form_fields;
+    }
 }

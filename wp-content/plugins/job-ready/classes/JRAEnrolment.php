@@ -50,7 +50,52 @@ class JRAEnrolmentOperations
 		
 	}
 	
+    // Get Enrolment by Enrolment ID
+    static function getJRAEnrolmentByEnrolmentID( $enrolment_id )
+    {
+        global $jr_api_headers;
+
+        $webservice = '/webservice/enrolment/' . $enrolment_id;
+        $url = JR_API_SERVER . $webservice;
+        $method = 'GET';
+
+        // Call the Job Ready API
+        try {
+
+            //make GET request
+            $response = wp_remote_request(	$url,
+                array(	'method' 	=> $method,
+                    'headers' 	=> $jr_api_headers,
+                    'timeout' 	=> 500 )
+            );
+
+            // Get the response
+            $result = wp_remote_retrieve_body( $response );
+
+            // Convert the XML to an Object
+            $result_object = xmlToObject($result);
+
+            if(isset($result_object->{'enrolment-identifier'}))
+            {
+                return $result_object;
+            }
+            else
+            {
+                $error = var_export($result_object, true);
+                send_error_email($url, $method, '', $error, $response);
+                return false;
+            }
+        }
+        catch (Exception $e)
+        {
+            $error = $e->getMessage();
+            send_error_email($url, $method, '', $error, $response);
+            return false;
+        }
+    }
+
 	
+    // Create a new Enrolment
 	static function createJRAEnrolment( $xml )
 	{
 		global $jr_api_headers;
@@ -96,6 +141,7 @@ class JRAEnrolmentOperations
 	}
 	
 
+    // Update an existing Enrolment
 	static function updateJRAEnrolment( $xml, $enrolment_id )
 	{
 		global $jr_api_headers;
@@ -141,7 +187,7 @@ class JRAEnrolmentOperations
 	}
 	
 	
-	
+    // Create XML for Enrolment
 	static function createJRAEnrolmentXML( $enrolment )
 	{
 		// XML Header
@@ -182,8 +228,37 @@ class JRAEnrolmentOperations
 		
 		return $xml;
 	}
+
+
+    // Create Basic XML for Enrolment
+	static function createJRAEnrolmentXMLBasic( $enrolment )
+	{
+		// XML Header
+		$xml = '<?xml version="1.0" encoding="UTF-8"?>
+				<enrolment>';
+
+		// Get the first string element from the invoice option (which returns name|price)
+		$invoice_option = explode("|", $enrolment->invoice_option);
+		
+		$xml .= '	<party-identifier>'.$enrolment->party_identifier.'</party-identifier>
+					<course-number>'.$enrolment->course_number.'</course-number>';
+		
+		// Only include if this field was set to something
+		if(trim($enrolment->enrolment_status) != '')
+		{
+			$xml .= '<enrolment-status>'.$enrolment->enrolment_status.'</enrolment-status>';
+		}
+		
+		$xml .= '	<invoice-option>'.$invoice_option[0].'</invoice-option>';
+		
+		// Close Enrolment
+		$xml .= '</enrolment>';
+		
+		return $xml;
+	}
 	
 	
+    // Update VSN for an Enrolment
 	static function updateJRAEnrolmentVSN( $enrolment, $enrolment_id )
 	{
 		$update_xml = JRAEnrolmentOperations::createJRAUpdateEnrolmentVSNXML($enrolment);
@@ -205,4 +280,43 @@ class JRAEnrolmentOperations
 		
 		return $xml;
 	}
+
+
+    // Update Enrolment Status for an Enrolment
+	static function updateJRAEnrolmentStatus( $enrolment, $enrolment_id )
+	{
+		$update_xml = JRAEnrolmentOperations::createJRAUpdateEnrolmentStatusXML($enrolment);
+		$result = JRAEnrolmentOperations::updateJRAEnrolment($update_xml, $enrolment_id);
+		return $result;
+	}
+
+
+	// Create XML to Update the Enrolment from Registration NASC
+	static function createJRAUpdateEnrolmentStatusXML( $enrolment )
+	{
+		// XML Header
+		$xml = '<?xml	version="1.0"	encoding="UTF-8"?>
+				<enrolment>
+				    <enrolment-status>'.$enrolment->enrolment_status.'</enrolment-status>
+				</enrolment>';
+		
+		return $xml;
+	}
+
+
+    static function mapJRAEnrolmentXMLObjectToJRAEnrolment( $enrolment_xml_object )
+    {
+        $enrolment = new JRAEnrolment();
+        $enrolment->party_identifier = (string)$enrolment_xml_object->{'party-identifier'};
+        $enrolment->course_number = (string)$enrolment_xml_object->{'course-number'};
+        $enrolment->study_reason = (string)$enrolment_xml_object->{'study-reason'};
+        $enrolment->enrolment_status = (string)$enrolment_xml_object->{'enrolment-status'};
+        $enrolment->invoice_option = (string)$enrolment_xml_object->{'invoice-option'};
+        $enrolment->victorian_student_number = (string)$enrolment_xml_object->{'victorian-student-number'};
+        $enrolment->unknown_victorian_student_number = (string)$enrolment_xml_object->{'unknown-victorian-student-number'};
+        $enrolment->previous_victorian_education_enrolment = (string)$enrolment_xml_object->{'previous-victorian-education-enrolment'};
+        $enrolment->client_occupation_identifier = (string)$enrolment_xml_object->{'client-occupation-identifier'};
+        $enrolment->client_industry_employment = (string)$enrolment_xml_object->{'client-industry-employment'};
+        return $enrolment;
+    }
 }
