@@ -602,9 +602,6 @@ function nasc_enrolment_form_process($entry, $form_data)
 		 	}
 		}
 		 
-		// Check course enrolment availability and sync from Job Ready if less than 3 remaining
-		check_course_date_and_sync ( $form->course_number );
-
         return $party_id;
 	} 
 	else 

@@ -396,7 +396,7 @@ function neca_order_item_permalink($product_get_permalink_item, $item, $order)
 		case PRE_APPRENTICE_APPLICATION_FORM :
 		case SHORT_COURSE_APPLICATION_FORM_NON_ACCREDITED :
 		case SHORT_COURSE_APPLICATION_FORM_ACCREDITED :
-		//case SHORT_COURSE_APPLICATION_NECCLV004 :
+        case NASC_REGISTRATION_FORM :
         case IOT_FORM_ID :
 			//$product_get_permalink_cart_item = site_url() . '/training-with-us/';
 			$product_get_permalink_cart_item = '';
@@ -674,7 +674,10 @@ function neca_filter_woocommerce_gf_order_items_meta_display( $output, $instance
 		$jrd =JobReadyDateOperations::loadJobReadyDateByCourseNumber($course_number);
 		$course_name = $jrd->course_name . " (" . $jrd->start_date_clean. " to " . $jrd->end_date_clean . ")";
 		
-		$new_output = "	<div><strong>Student Name:</strong> " . $form_data->{'First Name'} . " " . $form_data->{'Family Name'} . "<br/>
+		$new_output = "	<div><strong>Student Name:</strong> " . 
+                        (isset($form_data->{'First Name'}) ? $form_data->{'First Name'} . " " : '') . 
+                        (isset($form_data->{'Given Name/s'}) ? $form_data->{'Given Name/s'} . " " : '') .
+                        (isset($form_data->{'Family Name'}) ? $form_data->{'Family Name'} : '') . "<br/>
 						<strong>Course Name: </strong>" . $course_option . "<br/>
 						<strong>Course Number: </strong> " . $course_number. "</div>";
 		
@@ -748,64 +751,63 @@ function remove_order_notes( $fields ) {
 /**
  * Pre-populate Woocommerce checkout fields
  */
-add_filter('woocommerce_checkout_get_value', 'prepopulate_woocommerce_billing_details' , 10, 2);
+add_filter('woocommerce_checkout_get_value', 'prepopulate_woocommerce_billing_details', 10, 2);
 
-function prepopulate_woocommerce_billing_details($input, $key )
-{
-	if(isset($_SESSION['prefill']))
-	{
-		switch ($key) :
-			case 'billing_first_name':
-			return $_SESSION['prefill']->first_name;
-				break;
-			
-			case 'billing_last_name':
-				return $_SESSION['prefill']->surname;
-				break;
+function prepopulate_woocommerce_billing_details($input, $key) {
 
-			case 'billing_address_1':
-				return $_SESSION['prefill']->street_address1;
-				break;
+    if (empty($_SESSION['prefill']) || !is_object($_SESSION['prefill'])) {
+        return $input;
+    }
 
-			case 'billing_city':
-				return $_SESSION['prefill']->suburb;
-				break;
-				
-			case 'billing_state':
-				$states = array(	'ACT'	=>	'Australian Captial Territory',
-									'NSW'	=>	'New South Wales',
-									'NT'	=>	'Northern Territory',
-									'QLD'	=>	'Queensland',
-									'SA'	=>	'South Australia',
-									'TAS'	=>	'Tasmania',
-									'VIC' 	=>	'Victoria',
-									'WA'	=>	'Western Australia');
-				
-				$key = array_search($_SESSION['prefill']->state, $states);
-				return $key;
-				break;
-				
-			case 'billing_postcode':
-				return $_SESSION['prefill']->postcode;
-				break;
-				
-			case 'billing_phone':
-				if($_SESSION['prefill']->home_phone != '')
-				{
-					return $_SESSION['prefill']->home_phone;
-				}
-				else if($_SESSION['prefill']->mobile_phone != '')
-				{
-					return $_SESSION['prefill']->mobile_phone;
-				}
-				break;
-				
-			case 'billing_email':
-				return $_SESSION['prefill']->email;
-				break;
-					
-		endswitch;
-	}
+    $p = $_SESSION['prefill'];
+
+    switch ($key) {
+
+        case 'billing_first_name':
+            return $p->first_name ?? $input;
+
+        case 'billing_last_name':
+            return $p->surname ?? $input;
+
+        case 'billing_address_1':
+            return $p->street_address1 ?? $input;
+
+        case 'billing_city':
+            return $p->suburb ?? $input;
+
+        case 'billing_state':
+            $states = [
+                'ACT' => 'Australian Capital Territory',
+                'NSW' => 'New South Wales',
+                'NT'  => 'Northern Territory',
+                'QLD' => 'Queensland',
+                'SA'  => 'South Australia',
+                'TAS' => 'Tasmania',
+                'VIC' => 'Victoria',
+                'WA'  => 'Western Australia',
+            ];
+
+            $search = $p->state ?? '';
+            // If they already give you 'VIC', use it. If they give 'Victoria', map it.
+            if (isset($states[$search])) {
+                return $search;
+            }
+            $code = array_search($search, $states, true);
+            return $code ?: $input;
+
+        case 'billing_postcode':
+            return $p->postcode ?? $input;
+
+        case 'billing_phone':
+            if (!empty($p->home_phone))   return $p->home_phone;
+            if (!empty($p->mobile_phone)) return $p->mobile_phone;
+            return $input;
+
+        case 'billing_email':
+            return $p->email ?? $input;
+    }
+
+    return $input;
 }
 
 

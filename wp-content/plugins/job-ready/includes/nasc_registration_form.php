@@ -403,6 +403,9 @@ function nasc_registration_form_process($form_data, $order, $item_cost) {
 		 		}
 		 	}
 		 }
+
+        // Send Email to User
+        send_nasc_registration_confirmation_email ( $form, $party_id, $enrolment_id );
 		 
 		 // Check course enrolment availability and sync from Job Ready if less than 3 remaining
 		 check_course_date_and_sync ( $form->course_number );
@@ -417,4 +420,54 @@ function nasc_registration_form_process($form_data, $order, $item_cost) {
 		}
 		return false;
 	}
+}
+
+
+function send_nasc_registration_confirmation_email($form, $party_id, $enrolment_id)
+{
+    // Get Email Template
+    $email_template = get_email_template_by_name('NASC Registration Confirmation');
+    
+    if($email_template)
+    {
+        // Prepare Email Content
+        $to = $form->email;
+        $subject = str_replace('{course_number}', $form->course_number, $email_template->subject);
+        
+        $search = array(
+            '{first_name}',
+            '{surname}',
+            '{course_number}',
+            '{party_id}',
+            '{enrolment_id}'
+        );
+        
+        $replace = array(
+            $form->first_name,
+            $form->surname,
+            $form->course_number,
+            $party_id,
+            $enrolment_id
+        );
+        
+        $body = str_replace($search, $replace, $email_template->body);
+        
+        // Send Email
+        wp_mail($to, $subject, $body);
+    }
+}
+
+
+function get_email_template_by_name($template_name)
+{
+    $email_template = new stdClass();
+    $email_template->subject = 'Registration Confirmation for {course_number}';
+    $email_template->body = "Dear {first_name} {surname},\n\n";
+    $email_template->body .= 'Thanks for registering for {course_number}.';
+
+    // Create a link to /nasc-enrol/ passing in the party_id and enrolment_id as URL parameters
+    $email_template->body .= "\n\nComplete your enrolment here: " . home_url('/nasc-enrol/') . "?party_id={party_id}&enrolment_id={enrolment_id}";
+
+    $email_template->body .= "\n\nRegards,\nThe NECA Education and Careers Team";
+    return $email_template;
 }
