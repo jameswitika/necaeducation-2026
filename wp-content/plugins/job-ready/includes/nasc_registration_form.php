@@ -402,7 +402,11 @@ function nasc_registration_form_process($form_data, $order, $item_cost) {
 		 			}
 		 		}
 		 	}
-		 }
+		}
+
+        // Load Job Ready Data by Course Number
+        $jrd = JobReadyDateOperations::loadJobReadyDateByCourseNumber($form->course_number);
+        $form->course_start_date = $jrd->start_date_clean;
 
         // Send Email to User
         send_nasc_registration_confirmation_email ( $form, $party_id, $enrolment_id );
@@ -438,6 +442,7 @@ function send_nasc_registration_confirmation_email($form, $party_id, $enrolment_
             '{first_name}',
             '{surname}',
             '{course_number}',
+            '{course_start_date}',
             '{party_id}',
             '{enrolment_id}'
         );
@@ -446,6 +451,7 @@ function send_nasc_registration_confirmation_email($form, $party_id, $enrolment_
             $form->first_name,
             $form->surname,
             $form->course_number,
+            $form->course_start_date,
             $party_id,
             $enrolment_id
         );
@@ -460,14 +466,17 @@ function send_nasc_registration_confirmation_email($form, $party_id, $enrolment_
 
 function get_email_template_by_name($template_name)
 {
+    // Create a link to /nasc-enrol/ passing in the party_id and enrolment_id as URL parameters    
+    $enrolment_link = home_url('/nasc-enrol/') . "?party_id={party_id}&enrolment_id={enrolment_id}";
+    
     $email_template = new stdClass();
-    $email_template->subject = 'Registration Confirmation for {course_number}';
-    $email_template->body = "Dear {first_name} {surname},\n\n";
-    $email_template->body .= 'Thanks for registering for {course_number}.';
+    $email_template->subject = 'Complete your enrolment for {course_number}';
+    $email_template->preheader = 'Pre-header: It\'s time to finalise your NECA E&C course enrolment details';
+    $email_template->body = '<div style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;">' . esc_html($email_template->preheader) . '</div>';
+    $email_template->body = "Hi {first_name},\n\n";
+    $email_template->body .= 'Thank you for registering for {course_number} starting on {course_start_date}. We\'re looking forward to welcoming you to our campus.\n\nTo complete your enrolment for your course, we just need a few more details from you. Please click the link below to provide the required information:\n';
+    $email_template->body .= $enrolment_link;
+    $email_template->body .= "\n\nIf you have any questions, please call Student Services on 9381 1922 or email studentservices@necaeducation.com.au.\n\nThe NECA Education and Careers Team";
 
-    // Create a link to /nasc-enrol/ passing in the party_id and enrolment_id as URL parameters
-    $email_template->body .= "\n\nComplete your enrolment here: " . home_url('/nasc-enrol/') . "?party_id={party_id}&enrolment_id={enrolment_id}";
-
-    $email_template->body .= "\n\nRegards,\nThe NECA Education and Careers Team";
     return $email_template;
 }
