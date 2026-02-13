@@ -474,7 +474,7 @@ function get_email_template_by_name($template_name)
     $email_template->preheader = 'Pre-header: It\'s time to finalise your NECA E&C course enrolment details';
     $email_template->body = '<div style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;">' . esc_html($email_template->preheader) . '</div>';
     $email_template->body = "Hi {first_name},\n\n";
-    $email_template->body .= 'Thank you for registering for {course_number} starting on {course_start_date}. We\'re looking forward to welcoming you to our campus.\n\nTo complete your enrolment for your course, we just need a few more details from you. Please click the link below to provide the required information:\n';
+    $email_template->body .= "Thank you for registering for {course_number} starting on {course_start_date}. We're looking forward to welcoming you to our campus.\n\nTo complete your enrolment for your course, we just need a few more details from you. Please click the link below to provide the required information:\n\n";
     $email_template->body .= $enrolment_link;
     $email_template->body .= "\n\nIf you have any questions, please call Student Services on 9381 1922 or email studentservices@necaeducation.com.au.\n\nThe NECA Education and Careers Team";
 

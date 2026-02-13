@@ -374,7 +374,7 @@ function cpd_application_form_submission_process($entry, $form_data)
 	// Address
 	$form->street_address1 = ucwords ( strtolower ( $entry['30'] ) );
 	$form->suburb = ucwords ( strtolower ( $entry['31'] ) );
-	$form->state = ucwords ( strtolower ( $entry['32'] ) );
+	$form->state = $entry['32'];
 	$form->postcode = $entry['33'];
 	
 	$form->postal_address_same = $entry['43.1'];
@@ -384,7 +384,7 @@ function cpd_application_form_submission_process($entry, $form_data)
 		// Address
 		$form->postal_street_address1 = ucwords ( strtolower ( $entry['44'] ) );
 		$form->postal_suburb = ucwords ( strtolower ( $entry['47'] ) );
-		$form->postal_state = ucwords ( strtolower ( $entry['48'] ) );
+		$form->postal_state = $entry['48'];
 		$form->postal_postcode = $entry['46'];
 	}
 	
